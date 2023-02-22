@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
+class UWidgetComponent;
 class UCameraComponent;
 class USpringArmComponent;
 
@@ -34,4 +35,6 @@ private:
     UPROPERTY(VisibleAnywhere, Category = Camera)
     UCameraComponent* FollowCamera;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    UWidgetComponent* OverheadWidget;
 };
