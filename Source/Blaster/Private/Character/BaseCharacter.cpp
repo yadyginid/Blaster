@@ -6,6 +6,8 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "Weapon/BaseWeapon.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -47,6 +49,13 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
     PlayerInputComponent->BindAxis("MoveRight", this, &ABaseCharacter::MoveRight);
     PlayerInputComponent->BindAxis("LookUp", this, &ABaseCharacter::LookUp);
     PlayerInputComponent->BindAxis("Turn", this, &ABaseCharacter::Turn);
+}
+
+void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME_CONDITION(ABaseCharacter, OverlappingWeapon, COND_OwnerOnly);
 }
 
 void ABaseCharacter::MoveForward(float Amount)
@@ -93,4 +102,31 @@ void ABaseCharacter::LookUp(float Amount)
     }
 
     AddControllerPitchInput(Amount);
+}
+
+//call only for client
+void ABaseCharacter::OnRep_OverlappingWeapon(ABaseWeapon* LastOverlappingWeapon)
+{
+    if (OverlappingWeapon)
+    {
+        OverlappingWeapon->ShowPickupWidget(true);
+    }
+    
+    if (LastOverlappingWeapon)
+    {
+        LastOverlappingWeapon->ShowPickupWidget(false);
+    }
+}
+
+void ABaseCharacter::SetOverlappingWeapon(ABaseWeapon* PickupWeapon)
+{
+    const auto PickupWidget = PickupWeapon != nullptr ? PickupWeapon : OverlappingWeapon;
+
+    if (IsLocallyControlled())
+    {
+        const bool bShowWidget = PickupWeapon != nullptr ? true : false;
+        PickupWidget->ShowPickupWidget(bShowWidget);
+    } 
+
+    OverlappingWeapon = PickupWeapon;
 }
