@@ -3,6 +3,7 @@
 
 #include "Character/BaseCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CombatComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -27,6 +28,9 @@ ABaseCharacter::ABaseCharacter()
 
     OverheadWidget = CreateDefaultSubobject<UWidgetComponent>("OverheadWidget");
     OverheadWidget->SetupAttachment(GetRootComponent());
+
+    CombatComponent = CreateDefaultSubobject<UCombatComponent>("CombatComponent");
+    CombatComponent->SetIsReplicated(true);
 }
 
 void ABaseCharacter::BeginPlay()
@@ -44,6 +48,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
     
     PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+    PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &ABaseCharacter::EquipButtonPressed);
     
     PlayerInputComponent->BindAxis("MoveForward", this, &ABaseCharacter::MoveForward);
     PlayerInputComponent->BindAxis("MoveRight", this, &ABaseCharacter::MoveRight);
@@ -104,6 +109,24 @@ void ABaseCharacter::LookUp(float Amount)
     AddControllerPitchInput(Amount);
 }
 
+void ABaseCharacter::EquipButtonPressed()
+{
+    if (!CombatComponent)
+    {
+        return;
+    }
+
+    if (HasAuthority())
+    {
+        CombatComponent->EquipWeapon(OverlappingWeapon);
+    }
+    else
+    {
+        //client call ServerEquipButtonPressed_Implementation()
+       ServerEquipButtonPressed();
+    }
+}
+
 //call only for client
 void ABaseCharacter::OnRep_OverlappingWeapon(ABaseWeapon* LastOverlappingWeapon)
 {
@@ -129,4 +152,24 @@ void ABaseCharacter::SetOverlappingWeapon(ABaseWeapon* PickupWeapon)
     } 
 
     OverlappingWeapon = PickupWeapon;
+}
+
+void ABaseCharacter::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+
+    if (CombatComponent)
+    {
+        CombatComponent->Character = this;
+    }
+}
+
+void ABaseCharacter::ServerEquipButtonPressed_Implementation()
+{
+    if (!CombatComponent)
+    {
+        return;
+    }
+    
+    CombatComponent->EquipWeapon(OverlappingWeapon);
 }

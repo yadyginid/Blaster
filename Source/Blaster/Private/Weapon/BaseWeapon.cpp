@@ -5,6 +5,7 @@
 #include "Character/BaseCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Net/UnrealNetwork.h"
 
 ABaseWeapon::ABaseWeapon()
 {
@@ -46,6 +47,13 @@ void ABaseWeapon::BeginPlay()
 	}
 }
 
+void ABaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABaseWeapon, WeaponState);
+}
+
 void ABaseWeapon::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -64,7 +72,7 @@ void ABaseWeapon::OnOverlapBeginAreaSphere(UPrimitiveComponent* OverlapComponent
 }
 
 void ABaseWeapon::OnOverlapEndAreaSphere(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	ABaseCharacter* Character = Cast<ABaseCharacter>(OtherActor);
 	if (!Character)
@@ -85,3 +93,31 @@ void ABaseWeapon::ShowPickupWidget(bool bShow)
 	PickupWidget->SetVisibility(bShow);
 }
 
+//call on client
+void ABaseWeapon::OnRep_WeaponState()
+{
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_Equipped :
+		ShowPickupWidget(false);
+		break;
+	}
+}
+
+//call on server
+void ABaseWeapon::SetWeaponState(const EWeaponState NewWeaponState)
+{
+	WeaponState = NewWeaponState;
+
+	switch (WeaponState)
+	{
+		case EWeaponState::EWS_Equipped :
+			ShowPickupWidget(false);
+		
+			if (AreaSphere)
+			{
+				AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+		break;
+	}
+};
