@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/CombatComponent.h"
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
@@ -29,6 +30,9 @@ public:
 
     UFUNCTION(Server, Reliable)
     void ServerEquipButtonPressed();
+
+    bool IsWeaponEquipped();
+    bool GetIsAiming() const {return CombatComponent && CombatComponent->IsAiming();}
     
 protected:
     virtual void BeginPlay() override;
@@ -39,7 +43,11 @@ protected:
     void LookUp(float Amount);
 
     void EquipButtonPressed();
-    
+    void CrouchButtonPressed();
+
+    void AimButtonPressed();
+    void AimButtonReleased();
+
 private:
     UPROPERTY(VisibleAnywhere, Category = Camera)
     USpringArmComponent* CameraBoom;

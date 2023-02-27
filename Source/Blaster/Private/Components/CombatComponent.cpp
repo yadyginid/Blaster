@@ -3,6 +3,7 @@
 
 #include "Components/CombatComponent.h"
 #include "Character/BaseCharacter.h"
+#include "Net/UnrealNetwork.h"
 #include "Weapon/BaseWeapon.h"
 
 UCombatComponent::UCombatComponent()
@@ -13,6 +14,14 @@ UCombatComponent::UCombatComponent()
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+	DOREPLIFETIME(UCombatComponent, bAiming);
 }
 
 void UCombatComponent::EquipWeapon(ABaseWeapon* WeaponToEquip)
@@ -29,5 +38,17 @@ void UCombatComponent::EquipWeapon(ABaseWeapon* WeaponToEquip)
 	const FAttachmentTransformRules AttachmentTransformRules(EAttachmentRule::SnapToTarget, false);
 	EquippedWeapon->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentTransformRules, WeaponSocket);
 	EquippedWeapon->SetOwner(OwnerCharacter);
+}
+
+
+void UCombatComponent::SetAiming(bool NewAimValue)
+{
+	bAiming = NewAimValue;
+	ServerSetAiming(bAiming);
+}
+
+void UCombatComponent::ServerSetAiming_Implementation(bool LastValuebAming)
+{
+	bAiming = LastValuebAming;
 }
 

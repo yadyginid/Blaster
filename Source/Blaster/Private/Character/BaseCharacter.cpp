@@ -13,7 +13,8 @@
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+    bUseControllerRotationYaw = false;
+    
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>("CameraBoom");
     CameraBoom->SetupAttachment(GetMesh());
     CameraBoom->TargetArmLength = 600.0f;
@@ -22,10 +23,10 @@ ABaseCharacter::ABaseCharacter()
     FollowCamera = CreateDefaultSubobject<UCameraComponent>("FollowCamera");
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     FollowCamera->bUsePawnControlRotation = false;
-
-    bUseControllerRotationYaw = false;
+    
     GetCharacterMovement()->bOrientRotationToMovement = true;
-
+    GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+    
     OverheadWidget = CreateDefaultSubobject<UWidgetComponent>("OverheadWidget");
     OverheadWidget->SetupAttachment(GetRootComponent());
 
@@ -49,6 +50,10 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
     
     PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
     PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &ABaseCharacter::EquipButtonPressed);
+    PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ABaseCharacter::CrouchButtonPressed);
+
+    PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ABaseCharacter::AimButtonPressed);
+    PlayerInputComponent->BindAction("Aim",IE_Released, this, &ABaseCharacter::AimButtonReleased);
     
     PlayerInputComponent->BindAxis("MoveForward", this, &ABaseCharacter::MoveForward);
     PlayerInputComponent->BindAxis("MoveRight", this, &ABaseCharacter::MoveRight);
@@ -127,7 +132,11 @@ void ABaseCharacter::EquipButtonPressed()
     }
 }
 
-//call only for client
+void ABaseCharacter::CrouchButtonPressed()
+{
+    bIsCrouched ? UnCrouch() : Crouch();
+}
+
 void ABaseCharacter::OnRep_OverlappingWeapon(ABaseWeapon* LastOverlappingWeapon)
 {
     if (OverlappingWeapon)
@@ -172,4 +181,29 @@ void ABaseCharacter::ServerEquipButtonPressed_Implementation()
     }
     
     CombatComponent->EquipWeapon(OverlappingWeapon);
+}
+
+bool ABaseCharacter::IsWeaponEquipped()
+{
+   return (CombatComponent && CombatComponent->EquippedWeapon);
+}
+
+void ABaseCharacter::AimButtonPressed()
+{
+    if (!CombatComponent)
+    {
+        return;
+    }
+
+    CombatComponent->SetAiming(true);
+}
+
+void ABaseCharacter::AimButtonReleased()
+{
+    if (!CombatComponent)
+    {
+        return;
+    }
+
+    CombatComponent->SetAiming(false);
 }

@@ -15,20 +15,31 @@ class BLASTER_API UCombatComponent : public UActorComponent
 
 public:	
 	UCombatComponent();
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	friend class ABaseCharacter;
 
 	void EquipWeapon(ABaseWeapon* WeaponToEquip);
+	bool IsAiming() const {return bAiming;}
 	
 protected:
 	virtual void BeginPlay() override;
 
+	void SetAiming(bool NewAimValue);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetAiming(bool LastValuebAming);
+	
 private:
 	UPROPERTY()
 	ABaseCharacter* Character;
 	
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	ABaseWeapon* EquippedWeapon;
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat")
-	FName WeaponSocket = "RightHandSocket"; 
+	FName WeaponSocket = "RightHandSocket";
+
+	UPROPERTY(Replicated)
+	bool bAiming;
 };
