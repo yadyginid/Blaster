@@ -3,6 +3,7 @@
 
 #include "Components/CombatComponent.h"
 #include "Character/BaseCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapon/BaseWeapon.h"
 
@@ -38,6 +39,8 @@ void UCombatComponent::EquipWeapon(ABaseWeapon* WeaponToEquip)
 	const FAttachmentTransformRules AttachmentTransformRules(EAttachmentRule::SnapToTarget, false);
 	EquippedWeapon->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentTransformRules, WeaponSocket);
 	EquippedWeapon->SetOwner(OwnerCharacter);
+	OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+	OwnerCharacter->bUseControllerRotationYaw = true;
 }
 
 
@@ -52,3 +55,11 @@ void UCombatComponent::ServerSetAiming_Implementation(bool LastValuebAming)
 	bAiming = LastValuebAming;
 }
 
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (EquippedWeapon && Character)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
+}

@@ -29,12 +29,15 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(bool LastValuebAming);
+
+	UFUNCTION()
+	void OnRep_EquippedWeapon();
 	
 private:
 	UPROPERTY()
 	ABaseCharacter* Character;
 	
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	ABaseWeapon* EquippedWeapon;
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat")
